@@ -42,7 +42,7 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda2-py27_4.8.3-Linux
 RUN conda install -c anaconda tensorflow-gpu=1.15 python=3.7 \
 	&& conda install numpy  python=3.7  \
 	&& conda install -c conda-forge  matplotlib  python=3.7 \
-	&& conda install -c conda-forge  scikit-lear  python=3.7 \
+	&& conda install -c conda-forge  scikit-learn  python=3.7 \
 	&& conda install -c conda-forge opencv=4.2  python=3.7 
 
 
