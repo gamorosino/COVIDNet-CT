@@ -60,7 +60,7 @@ RUN  cd / \
 	&& /bin/bash -c 'source /COVIDNet-CT/utilities.sh;\
 	mkdir -p "/COVIDNet-CT/models/";\
 	mkdir -p "/COVIDNet-CT/models/COVIDNet-CT-B/";\
-	gdrive_download "https://drive.google.com/file/d/1ZdS3Eu2YlQavx-Zw8cG0pNeSKTJxbZEA/view?usp=sharing"  "/COVIDNet-CT/models/model.data-00000-of-00001" ; \ 
+	gdrive_download "https://drive.google.com/file/d/1ZdS3Eu2YlQavx-Zw8cG0pNeSKTJxbZEA/view?usp=sharing"  "/COVIDNet-CT/models/COVIDNet-CT-B/model.data-00000-of-00001" ; \ 
 	gdrive_download "https://drive.google.com/file/d/1ogrQXQ6gE0XoZNCGw3qzdSnjNQed4U1k/view?usp=sharing"  "/COVIDNet-CT/models/COVIDNet-CT-B/model.index" ; \ 
 	gdrive_download "https://drive.google.com/file/d/1VFrIqujLXTEkf0QX888kWaVdyjugNGJR/view?usp=sharing"  "/COVIDNet-CT/models/COVIDNet-CT-B/model.meta" ; \ 
 	gdrive_download "https://drive.google.com/file/d/1Rt1v4qgQTnVntI7lQwMeIVlbOolme_PU/view?usp=sharing"  "/COVIDNet-CT/models/COVIDNet-CT-B/checkpoint" ; ' # \ 
