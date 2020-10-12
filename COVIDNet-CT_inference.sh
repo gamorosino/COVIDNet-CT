@@ -80,6 +80,58 @@ fail() 		{
   			error "$@"
   			exit 1
 		};
+
+check_type() { 
+		local input_path=$1
+		# check file type
+		file_mime=$( file --mime-type -b  ${input_path} )
+		file_type=$( echo $file_mime | rev | cut -d"/" -f1  | rev )
+
+		case "${file_type}" in
+
+			"dicom")
+
+				source /env/bin/activate
+				source ${utilities}
+				input_path_jpg=$( dirname ${input_path} )"/"$( fbasename ${input_path} )".jpg"
+				echo "Conversion from DICOM to JPEG..." >> ${temp_txt}
+				imm_dcm2jpg ${input_path}    1>> ${temp_txt}  2>> ${temp_err}
+				input_path=${input_path_jpg}
+				deactivate
+				echo ${input_path}
+				export input_path_jpg
+			;;
+
+
+			"png")
+
+				#source  /env/bin/activate
+				#source ${utilities}
+				#input_path_jpg=$( dirname ${input_path} )"/"$( fbasename ${input_path} )".jpg"
+				#echo "Conversion from PNG to JPEG..."
+				#imm_png2jpg ${input_path} 1>> ${temp_txt}  2>> ${temp_err}   ;
+				#input_path=${input_path_jpg}
+				#deactivate
+
+				echo $( dirname ${input_path} )"/"$( basename ${input_path} )
+
+			;;
+
+			"jpeg")
+
+				echo $( dirname ${input_path} )"/"$( basename ${input_path} )
+			;;
+
+			*)
+				echo "None"
+			;;
+		    esac
+
+		    
+
+		}
+
+
 #########################################################################################################################
 ### main
 #########################################################################################################################
@@ -117,71 +169,39 @@ temp_log=$( dirname ${input_path} )"/"$( fbasename ${input_path} )"_"${COVIDNet_
 printf "" >> $temp_err;
 
 if [ -d ${input_path} ]; then
-
-	for i in $( ls ${input_path} ); do  \
+	input_folder=${input_path}
+	slices=( $( ls ${input_folder} ) )
+	for i in ${slices[@]}; do  \
 		printf "Image: "${i}" "; 
-		python ${COVIDNet_DIR}"/inference.py"     \
-					--weightspath ${weightspath}     \
-				    	--metaname "model.meta"     \
-					--ckptname $ckptname    \
-					--imagepath ${input_path}"/"${i} ${ocommands} \
-					1>> ${temp_txt} 2>> ${temp_err}  ; \
-					printf "Image: "$( basename ${i} )" ; "  >> ${output_txt}
-					prediction=$( cat ${temp_txt} | grep   "Prediction" ) ; 
-	                                Confidence=$( cat ${temp_txt} | grep   "Normal" ) ;  
-					echo "- "${prediction}" - Confidence: "${Confidence}; 
-					echo ${prediction}" ; Confidence: "${Confidence} >> ${output_txt} ;  
+		input_path=$( check_type ${input_folder}"/"${i}   )
+		[ "$input_path" == "None" ] && { continue; }
+		
+		python ${COVIDNet_DIR}"/run_covidnet_ct.py" infer     \
+					--model_dir ${weightspath}     \
+					--meta_name "model.meta"     \
+					--ckpt_name ${ckptname}     \
+					--image_file ${input_path} \
+					1>> ${temp_txt}  2>> ${temp_err}   ; \
+					printf "Image: "$( fbasename ${input_path} )" ; "  >> ${output_txt};  \
+					prediction=$( cat ${temp_txt} | grep   "Predicted" ) ; \
+					Confidence=$( cat ${temp_txt} | grep   "Normal" ) ; \
+					printf " -  ${prediction} "
+#					sleep 1.5
+					echo " -  "${Confidence}; \
+					echo ${prediction}" ; "${Confidence} >> ${output_txt} ; 
+					
 					cat ${temp_txt} >> ${temp_log};
 					rm ${temp_txt}; 
+#					sleep 0.5
+					[ -z "${input_path_jpg}" ] || { rm ${input_path_jpg} ; }
 	done
 
 else
 
 
 
-	# check file type
-	file_mime=$( file --mime-type -b  ${input_path} )
-	file_type=$( echo $file_mime | rev | cut -d"/" -f1  | rev )
-
-	case "${file_type}" in
-
-		"dicom")
-
-			source /env/bin/activate
-			source ${utilities}
-			input_path_jpg=$( dirname ${input_path} )"/"$( fbasename ${input_path} )".jpg"
-			echo "Conversion from DICOM to JPEG..."
-			imm_dcm2jpg ${input_path} 1>> ${temp_txt}  2>> ${temp_err}   ;
-			input_path=${input_path_jpg}
-			deactivate
-			echo "Perform inference on the image:"
-		;;
-
-
-		"png")
-
-			#source  /env/bin/activate
-			#source ${utilities}
-			#input_path_jpg=$( dirname ${input_path} )"/"$( fbasename ${input_path} )".jpg"
-			#echo "Conversion from PNG to JPEG..."
-			#imm_png2jpg ${input_path} 1>> ${temp_txt}  2>> ${temp_err}   ;
-			#input_path=${input_path_jpg}
-			#deactivate
-
-			echo "Perform inference on the image:"
-
-		;;
-
-		"jpeg")
-
-			echo "Perform inference on the image:"
-		;;
-
-		*)
-			[ -z $file_type ] || { fail "Unsupported file type '$file_type'";} 
-		;;
-	    esac
-
+	input_path=$( check_type ${input_path}  )
+	[ "$input_path" == "None" ] && { fail "Unsupported file type '$file_type'";} 
 	sleep 1
 	printf "Image: "$( fbasename ${input_path} )" "; 
 
@@ -194,12 +214,12 @@ else
 					--image_file ${input_path} \
 					1>> ${temp_txt}  2>> ${temp_err}   ; \
 					printf "Image: "$( fbasename ${input_path} )" ; "  >> ${output_txt};  \
-					prediction=$( cat ${temp_txt} | grep   "Prediction" ) ; \
+					prediction=$( cat ${temp_txt} | grep   "Predicted" ) ; \
 					Confidence=$( cat ${temp_txt} | grep   "Normal" ) ; \
 					printf " -  ${prediction} "
 					sleep 1.5
-					echo " -  Confidence: "${Confidence}; \
-					echo ${prediction}" ; Confidence: "${Confidence} >> ${output_txt} ;
+					echo " -  "${Confidence}; \
+					echo ${prediction}" ; "${Confidence} >> ${output_txt} ;
 					cp ${temp_txt}  ${temp_log}
 					rm ${temp_txt};
 					sleep 0.5
