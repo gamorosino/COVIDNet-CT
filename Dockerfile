@@ -85,14 +85,14 @@ RUN  cd / \
 
 #--user
 RUN cd / \
-	&& echo "Create virtual eviroment with pip..." \
+	&& echo "Create virtual enviroment with pip..." \
 	&& /bin/bash -c  'pip install --upgrade pip;\
 	python3 -m pip install  virtualenv; \
 	python3 -m venv env ; \
 	source env/bin/activate ; \
 	pip install --upgrade pip; \
 	pip install opencv-python ; \
-	pip install tensorflow-io ; \
+	pip install tensorflow-io==0.11.0 ; \
 	pip install tensorflow==2.2.0 ; \
 	deactivate ; '
 
