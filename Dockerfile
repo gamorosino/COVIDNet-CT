@@ -51,7 +51,8 @@ RUN conda install -c anaconda tensorflow-gpu=1.15 python=3.7 \
 RUN cd / \
   && git clone https://github.com/gamorosino/COVIDNet-CT.git \
   && cd COVIDNet-CT \
-  && git checkout docker
+  && git checkout docker \
+  && chmod a+x COVIDNet-CT_inference.sh  
 
 
 ## Download Checkpoints
@@ -63,26 +64,28 @@ RUN  cd / \
 	gdrive_download "https://drive.google.com/file/d/1ZdS3Eu2YlQavx-Zw8cG0pNeSKTJxbZEA/view?usp=sharing"  "/COVIDNet-CT/models/COVIDNet-CT-B/model.data-00000-of-00001" ; \ 
 	gdrive_download "https://drive.google.com/file/d/1ogrQXQ6gE0XoZNCGw3qzdSnjNQed4U1k/view?usp=sharing"  "/COVIDNet-CT/models/COVIDNet-CT-B/model.index" ; \ 
 	gdrive_download "https://drive.google.com/file/d/1VFrIqujLXTEkf0QX888kWaVdyjugNGJR/view?usp=sharing"  "/COVIDNet-CT/models/COVIDNet-CT-B/model.meta" ; \ 
-	gdrive_download "https://drive.google.com/file/d/1Rt1v4qgQTnVntI7lQwMeIVlbOolme_PU/view?usp=sharing"  "/COVIDNet-CT/models/COVIDNet-CT-B/checkpoint" ; ' # \ 
+	gdrive_download "https://drive.google.com/file/d/1Rt1v4qgQTnVntI7lQwMeIVlbOolme_PU/view?usp=sharing"  "/COVIDNet-CT/models/COVIDNet-CT-B/checkpoint" ; ' 
+	# \ 
 	#mkdir "/data"; \
 	#gdrive_download "" "/data/PROVA.jpg" ;\
 	#gdrive_download "" "/data/PROVA_DICOM.dcm" ;\
 	#gdrive_download "" "/data/PROVA_PNG.png" ;'
 
-# to cite COVID-Net
-#@misc{wang2020covidnet,
-#    title={COVID-Net: A Tailored Deep Convolutional Neural Network Design for Detection of COVID-19 Cases from Chest Radiography Images},
-#    author={Linda Wang, Zhong Qiu Lin and Alexander Wong},
-#    year={2020},
-#    eprint={2003.09871},
-#    archivePrefix={arXiv},
-#    primaryClass={cs.CV}
+# to cite COVIDNet-CT
+#@misc{gunraj2020covidnetct,
+#      title={COVIDNet-CT: A Tailored Deep Convolutional Neural Network Design for Detection of COVID-19 Cases from Chest CT Images}, 
+#      author={Hayden Gunraj and Linda Wang and Alexander Wong},
+#      year={2020},
+#      eprint={2009.05383},
+#      archivePrefix={arXiv},
+#      primaryClass={eess.IV}
 #}
 
 ## Create virtual env
 
 #--user
 RUN cd / \
+	&& echo "Create virtual eviroment with pip..." \
 	&& /bin/bash -c  'pip install --upgrade pip;\
 	python3 -m pip install  virtualenv; \
 	python3 -m venv env ; \
