@@ -8,7 +8,7 @@
 ###################	description:	Scripts that performs inferce on a series of slice	      ###################
 ###################			using COVIDNet-CT					      ###################
 ###################										      ###################
-###################	version:	0.0.0        				                      ###################
+###################	version:	0.1.0        				                      ###################
 ###################	notes:	        .							      ###################
 ###################	bash version:   tested on GNU bash, version 4.2.53			      ###################
 ###################		           							      ###################
@@ -83,6 +83,7 @@ fail() 		{
 
 check_type() { 
 		local input_path=$1
+		local temp_dir=$2
 		# check file type
 		file_mime=$( file --mime-type -b  ${input_path} )
 		file_type=$( echo $file_mime | rev | cut -d"/" -f1  | rev )
@@ -93,13 +94,13 @@ check_type() {
 
 				source /env/bin/activate
 				source ${utilities}
-				input_path_jpg=$( dirname ${input_path} )"/"$( fbasename ${input_path} )".jpg"
+				
+				input_path_jpg=${temp_dir}"/"$( fbasename ${input_path} )".jpg"
 				echo "Conversion from DICOM to JPEG..." >> ${temp_txt}
-				imm_dcm2jpg ${input_path}    1>> ${temp_txt}  2>> ${temp_err}
+				imm_dcm2jpg ${input_path} ${temp_dir}   1>> ${temp_txt}  2>> ${temp_err}
 				input_path=${input_path_jpg}
 				deactivate
 				echo ${input_path}
-				export input_path_jpg
 			;;
 
 
@@ -132,9 +133,29 @@ check_type() {
 		}
 
 
+exists () {
+                ############# ############# ############# ############# ############# ############# #############
+                #############  		      Controlla l'esistenza di un file o directory	    ############# 
+                ############# ############# ############# ############# ############# ############# #############  		                      			
+		if [ $# -lt 1 ]; then
+		    echo $0: "usage: exists <filename> "
+		    echo "    echo 1 if the file (or folder) exists, 0 otherwise"
+		    return 1;		    
+		fi 
+		
+		if [ -d "${1}" ]; then 
+
+			echo 1;
+		else
+			([ -e "${1}" ] && [ -f "${1}" ]) && { echo 1; } || { echo 0; }	
+		fi		
+		};
+
+
 #########################################################################################################################
 ### main
 #########################################################################################################################
+
 
 SCRIPT=`realpath -s $0`
 dir_script=`dirname $SCRIPT`
@@ -169,22 +190,69 @@ temp_log=$( dirname ${input_path} )"/"$( fbasename ${input_path} )"_"${COVIDNet_
 printf "" >> $temp_err;
 
 if [ -d ${input_path} ]; then
+
 	input_folder=${input_path}
 	slices=( $( ls ${input_folder} ) )
-	for i in ${slices[@]}; do  \
-		printf "Image: "${i}" "; 
-		input_path=$( check_type ${input_folder}"/"${i}   )
+	temp_dir=${input_folder}"/tmp_"$( date +%s )
+	idx=0
+	count_H=0
+	count_P=0
+	count_C=0
+	for slice in ${slices[@]}; do  \
+		printf "Slice "${idx}" - "
+		printf "filename: "${slice}" "; 
+		idx=$(( $idx + 1 ))
+		input_path=$( check_type ${input_folder}"/"${slice} ${temp_dir}  )
 		[ "$input_path" == "None" ] && { continue; }
-		
+		printf "Slice "${idx}" ; "  >> ${output_txt};
 		python ${COVIDNet_DIR}"/run_covidnet_ct.py" infer     \
 					--model_dir ${weightspath}     \
 					--meta_name "model.meta"     \
 					--ckpt_name ${ckptname}     \
 					--image_file ${input_path} \
 					1>> ${temp_txt}  2>> ${temp_err}   ; \
-					printf "Image: "$( fbasename ${input_path} )" ; "  >> ${output_txt};  \
+					printf "filename: "${slice}" ; "  >> ${output_txt};  \
+
 					prediction=$( cat ${temp_txt} | grep   "Predicted" ) ; \
-					Confidence=$( cat ${temp_txt} | grep   "Normal" ) ; \
+					prediction_v=( $( echo ${prediction} ) )
+					prediction_t=${prediction_v[2]}					
+				
+
+					Confidence=$( cat ${temp_txt} | grep   "Confidence"  ) ; 
+					
+					Confidence_v=( $( echo "${Confidence}" ) )
+					Confidence_H=${Confidence_v[2]}
+					Confidence_H=${Confidence_H//','/''}
+					Confidence_P=${Confidence_v[4]}
+					Confidence_P=${Confidence_P//','/''}
+					Confidence_C=${Confidence_v[6]}
+					Confidence_C=${Confidence_C//','/''}
+					#echo "confidence H: "${Confidence_H}
+					#echo "confidence P: "${Confidence_P}
+					#echo "confidence C: "${Confidence_C}
+
+					case ${prediction_t} in 
+
+						Normal)
+						Confidence_H=`printf "%.3f" $Confidence_H`
+						Confidence="Confidence: "${Confidence_H}
+						count_H=$(( $count_H + 1 ))
+						;;
+
+						Pneumonia)
+						Confidence_P=`printf "%.3f" $Confidence_P`
+						Confidence="Confidence: "${Confidence_P}
+						count_P=$(( $count_P + 1 ))
+						;;
+
+						COVID-19)
+						Confidence_C=`printf "%.3f" $Confidence_C`
+						Confidence="Confidence: "${Confidence_C}
+						count_C=$(( $count_C + 1 ))
+						;;
+
+					esac
+
 					printf " -  ${prediction} "
 #					sleep 1.5
 					echo " -  "${Confidence}; \
@@ -192,9 +260,16 @@ if [ -d ${input_path} ]; then
 					
 					cat ${temp_txt} >> ${temp_log};
 					rm ${temp_txt}; 
-#					sleep 0.5
-					[ -z "${input_path_jpg}" ] || { rm ${input_path_jpg} ; }
+					
+
+					
 	done
+
+	echo "Number of slice Predicted as Normal: "${count_H}
+	echo "Number of slice Predicted as Pneumonia: "${count_P}
+	echo "Number of slice Predicted as COVID-19: "${count_C}
+
+	[ $( exists ${temp_dir} ) -eq 1 ] && { rm -rf ${temp_dir} ; }
 
 else
 
@@ -215,7 +290,7 @@ else
 					1>> ${temp_txt}  2>> ${temp_err}   ; \
 					printf "Image: "$( fbasename ${input_path} )" ; "  >> ${output_txt};  \
 					prediction=$( cat ${temp_txt} | grep   "Predicted" ) ; \
-					Confidence=$( cat ${temp_txt} | grep   "Normal" ) ; \
+					Confidence=$( cat ${temp_txt} | grep   "Confidence" ) ; \
 					printf " -  ${prediction} "
 					sleep 1.5
 					echo " -  "${Confidence}; \
@@ -226,4 +301,5 @@ else
 					[ -z ${input_path_jpg} ] || { rm ${input_path_jpg} ; }
 
 fi
+
 
