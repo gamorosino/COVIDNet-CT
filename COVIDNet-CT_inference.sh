@@ -23,12 +23,12 @@
 #########################################################################################################################
 
 input_path=$1
-COVIDNet_model=$2
-output_txt=$3
+output_dir=$2
+COVIDNet_model=$3
 
 
 		if [ $# -lt 1 ]; then							# usage dello script							
-			    echo $0: "usage: COVIDNet-CT_inference.sh <input_path> [<COVIDNet_model>] [<output_txt>]"			    
+			    echo $0: "usage: COVIDNet-CT_inference.sh <input_path>  [<output_dir>] [<COVIDNet_model>]"			    
 			    echo     "COVIDNet_model:   "
 			    echo     "                1. COVIDNet-CT-A"
 			    echo     "                2. COVIDNet-CT-B"
@@ -108,7 +108,7 @@ check_type() {
 
 				#source  /env/bin/activate
 				#source ${utilities}
-				#input_path_jpg=$( dirname ${input_path} )"/"$( fbasename ${input_path} )".jpg"
+				#input_path_jpg=${output_dir}"/"$( fbasename ${input_path} )".jpg"
 				#echo "Conversion from PNG to JPEG..."
 				#imm_png2jpg ${input_path} 1>> ${temp_txt}  2>> ${temp_err}   ;
 				#input_path=${input_path_jpg}
@@ -170,8 +170,12 @@ model_v=( $( ls ${weightspath}"/model"*"data"* )  )
 model_str=${model_v[0]}
 sind=$( str_index ${model_v[0]} "." )
 ckptname=$( basename ${model_str:0:${sind}} )
-[ -z ${output_txt} ] && \
-	{ output_txt=$( dirname ${input_path} )'/'$( fbasename ${input_path} )"_"${COVIDNet_model}"_inference_output.txt"; }
+
+
+[ -z ${output_dir} ] && { output_dir=$( dirname ${input_path} ); } || { mkdir -p  ${output_dir}; }
+
+output_txt=${output_dir}"/"$( fbasename ${input_path} )"_"${COVIDNet_model}"_inference_output.txt";
+output_short=${output_dir}"/"$( fbasename ${input_path} )"_"${COVIDNet_model}"_inference_output_short.txt";
 
 ( [ "${COVIDNet_model}" ==  "COVIDNet-CXR-Large"  ] || \
 	[  "${COVIDNet_model}" ==  "COVIDNet-CXR-Small" ] ) &&\
@@ -179,14 +183,15 @@ ckptname=$( basename ${model_str:0:${sind}} )
 
 
 printf "" > ${output_txt}
+printf "" > ${output_short}
 
 # define text files
 time_=$( date +%D_%T )
 time_=${time_//'/'/'_'}
 time_=${time_//':'/'_'}
-temp_txt=$( dirname ${input_path} )"/"$( fbasename ${input_path} )"_"${COVIDNet_model}"_inference_"${time_}".txt"
-temp_err=$( dirname ${input_path} )"/"$( fbasename ${input_path} )"_"${COVIDNet_model}"_inference_"${time_}".err"
-temp_log=$( dirname ${input_path} )"/"$( fbasename ${input_path} )"_"${COVIDNet_model}"_inference_"${time_}".log"
+temp_txt=${output_dir}"/"$( fbasename ${input_path} )"_"${COVIDNet_model}"_inference_"${time_}".txt"
+temp_err=${output_dir}"/"$( fbasename ${input_path} )"_"${COVIDNet_model}"_inference_"${time_}".err"
+temp_log=${output_dir}"/"$( fbasename ${input_path} )"_"${COVIDNet_model}"_inference_"${time_}".log"
 printf "" >> $temp_err;
 
 if [ -d ${input_path} ]; then
@@ -198,12 +203,12 @@ if [ -d ${input_path} ]; then
 	count_H=0
 	count_P=0
 	count_C=0
-	for slice in ${slices[@]}; do  \
+	for slice in ${slices[@]}; do  
+		input_path=$( check_type ${input_folder}"/"${slice} ${temp_dir}  )
+		[ "$input_path" == "None" ] && { continue; }
 		printf "Slice "${idx}" - "
 		printf "filename: "${slice}" "; 
 		idx=$(( $idx + 1 ))
-		input_path=$( check_type ${input_folder}"/"${slice} ${temp_dir}  )
-		[ "$input_path" == "None" ] && { continue; }
 		printf "Slice "${idx}" ; "  >> ${output_txt};
 		python ${COVIDNet_DIR}"/run_covidnet_ct.py" infer     \
 					--model_dir ${weightspath}     \
@@ -265,23 +270,28 @@ if [ -d ${input_path} ]; then
 					
 	done
 
-	echo "Number of slice Predicted as Normal: "${count_H}
-	echo "Number of slice Predicted as Pneumonia: "${count_P}
-	echo "Number of slice Predicted as COVID-19: "${count_C}
+	echo "Number of slice Predicted as Normal:    "${count_H} "("$( python -c "print(100*float(${count_H}/${#slices[@]}))" )"%)" 
+	echo "Number of slice Predicted as Pneumonia: "${count_P} "("$( python -c "print(100*float(${count_P}/${#slices[@]}))" )"%)" 
+	echo "Number of slice Predicted as COVID-19:  "${count_C} "("$( python -c "print(100*float(${count_C}/${#slices[@]}))" )"%)" 
+
+	echo "Number of slice Predicted as Normal:    "${count_H} "("$( python -c "print(100*float(${count_H}/${#slices[@]}))" )"%)" >> ${output_short}
+	echo "Number of slice Predicted as Pneumonia: "${count_P} "("$( python -c "print(100*float(${count_P}/${#slices[@]}))" )"%)" >> ${output_short}
+	echo "Number of slice Predicted as COVID-19:  "${count_C} "("$( python -c "print(100*float(${count_C}/${#slices[@]}))" )"%)" >> ${output_short}
 
 	[ $( exists ${temp_dir} ) -eq 1 ] && { rm -rf ${temp_dir} ; }
 
 else
 
 
+	input_folder=$( dirname ${input_path} )
+	temp_dir=${input_folder}"/tmp_"$( date +%s )	
 
-	input_path=$( check_type ${input_path}  )
+	input_path=$( check_type ${input_path} ${temp_dir}  )
 	[ "$input_path" == "None" ] && { fail "Unsupported file type '$file_type'";} 
-	sleep 1
 	printf "Image: "$( fbasename ${input_path} )" "; 
 
 	# perform prediction
-	
+
 	python ${COVIDNet_DIR}"/run_covidnet_ct.py" infer     \
 					--model_dir ${weightspath}     \
 					--meta_name "model.meta"     \
@@ -298,7 +308,7 @@ else
 					cp ${temp_txt}  ${temp_log}
 					rm ${temp_txt};
 					sleep 0.5
-					[ -z ${input_path_jpg} ] || { rm ${input_path_jpg} ; }
+					[ $( exists ${temp_dir} ) -eq 1 ] && { rm -rf ${temp_dir} ; }
 
 fi
 

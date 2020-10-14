@@ -55,7 +55,7 @@ RUN cd / \
   && chmod a+x COVIDNet-CT_inference.sh  
 
 
-## Download Checkpoints
+## Download Checkpoints & Sample Data
 
 RUN  cd / \
 	&& /bin/bash -c 'source /COVIDNet-CT/utilities.sh;\
@@ -64,12 +64,20 @@ RUN  cd / \
 	gdrive_download "https://drive.google.com/file/d/1ZdS3Eu2YlQavx-Zw8cG0pNeSKTJxbZEA/view?usp=sharing"  "/COVIDNet-CT/models/COVIDNet-CT-B/model.data-00000-of-00001" ; \ 
 	gdrive_download "https://drive.google.com/file/d/1ogrQXQ6gE0XoZNCGw3qzdSnjNQed4U1k/view?usp=sharing"  "/COVIDNet-CT/models/COVIDNet-CT-B/model.index" ; \ 
 	gdrive_download "https://drive.google.com/file/d/1VFrIqujLXTEkf0QX888kWaVdyjugNGJR/view?usp=sharing"  "/COVIDNet-CT/models/COVIDNet-CT-B/model.meta" ; \ 
-	gdrive_download "https://drive.google.com/file/d/1Rt1v4qgQTnVntI7lQwMeIVlbOolme_PU/view?usp=sharing"  "/COVIDNet-CT/models/COVIDNet-CT-B/checkpoint" ; ' 
-	# \ 
-	#mkdir "/data"; \
-	#gdrive_download "" "/data/PROVA.jpg" ;\
-	#gdrive_download "" "/data/PROVA_DICOM.dcm" ;\
-	#gdrive_download "" "/data/PROVA_PNG.png" ;'
+	gdrive_download "https://drive.google.com/file/d/1Rt1v4qgQTnVntI7lQwMeIVlbOolme_PU/view?usp=sharing"  "/COVIDNet-CT/models/COVIDNet-CT-B/checkpoint" ; \ 
+	mkdir -p "/data/CT_SAMPLE_DICOM/" ;\
+	gdrive_download "https://drive.google.com/file/d/1UDuqKxeQ2hvzbam7t6iA1L1Af0Q-2SK4/view?usp=sharing" "/data/CT_SAMPLE_DICOM/15124679" ;\
+	gdrive_download "https://drive.google.com/file/d/1dFRJVT-8d1RkVmLuHej8HrFVT0iSrffN/view?usp=sharing" "/data/CT_SAMPLE_DICOM/76035005" ;\
+	gdrive_download "https://drive.google.com/file/d/10BDagpa6g7E9IFZxUac0buN8dO0E6BUm/view?usp=sharing" "/data/CT_SAMPLE_DICOM/76035302" ;\
+	gdrive_download "https://drive.google.com/file/d/1Y6XrXWiVAY6F4GS0Ds557rNK_rlaNJX-/view?usp=sharing" "/data/CT_SAMPLE_DICOM/76035643" ;\
+	gdrive_download "https://drive.google.com/file/d/14NzS9Gslljcrh-tuIGJEdx7UtESJA16u/view?usp=sharing" "/data/CT_SAMPLE_DICOM/76035665" ;\
+	mkdir -p "/data/CT_SAMPLE_JPG/" ;\
+	gdrive_download "https://drive.google.com/file/d/1m7BJeKlwkgWfpFc3Nk4McGJI9kbxZypC/view?usp=sharing" "/data/CT_SAMPLE_JPG/15124679.jpg" ;\
+	gdrive_download "https://drive.google.com/file/d/18EWmifjo4zVHUIGVfN1PeSE-ysrRxuAC/view?usp=sharing" "/data/CT_SAMPLE_JPG/76035005.jpg" ;\
+	gdrive_download "https://drive.google.com/file/d/1D-VKrzqh2qRK5vaTTiQdqn50N64zt8kZ/view?usp=sharing" "/data/CT_SAMPLE_JPG/76035302.jpg" ;\
+	gdrive_download "https://drive.google.com/file/d/1tsywWPM8avq8TzqJilYdsyrBrLgMTwjq/view?usp=sharing" "/data/CT_SAMPLE_JPG/76035643.jpg" ;\
+	gdrive_download "https://drive.google.com/file/d/1nUcQHUQoHbsAbUFDiBioxH6sYBuGXiWJ/view?usp=sharing" "/data/CT_SAMPLE_JPG/76035665.jpg" ;\
+	'
 
 # to cite COVIDNet-CT
 #@misc{gunraj2020covidnetct,
