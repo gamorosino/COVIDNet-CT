@@ -30,7 +30,8 @@ import tensorflow as tf
 import cv2
 import os
 import numpy as np
-import pydicom
+import dicom as pydicom
+from glob import glob
 
 def NormData(X):
             
@@ -50,21 +51,22 @@ def dcm2array(filenameDCM, preproc=False):
         image_bytes = tf.io.read_file(filenameDCM)
         image = tfio.image.decode_dicom_image(image_bytes, dtype=tf.uint16)
         arr=np.squeeze(image.numpy())	
-	if preproc	
-		DICOM=pydicom.read_file(filenameDCM) 
-		arr[arr == -2000] = 0
+        if preproc:
+                print("preproc image...")
+                DICOM=pydicom.read_file(filenameDCM,force=True) 
+                arr[arr == -2000] = 0
     		# Convert to Hounsfield units (HU)        
-        	intercept = DICOM.RescaleIntercept
-        	slope = DICOM.RescaleSlope
-        	arr = slope * arr.astype(np.float64)
-            	arr = arr.astype(np.uint16)
-        	arr += np.uint16(intercept)
+                intercept = DICOM.RescaleIntercept
+                slope = DICOM.RescaleSlope
+                arr = slope * arr.astype(np.float64)
+                arr = arr.astype(np.int16)
+                arr += np.int16(intercept)
 
-		#MIN_BOUND = -1000.0
-		#MAX_BOUND = 400.0
-    		#arr = (arr - MIN_BOUND) / (MAX_BOUND - MIN_BOUND)
-    		#arr[arr>1] = 1.
-    		#arr[arr<0] = 0.
+                MIN_BOUND = -1000.0
+                MAX_BOUND = 400.0
+                arr = (arr - MIN_BOUND) / (MAX_BOUND - MIN_BOUND)
+                arr[arr>1] = 1.
+                arr[arr<0] = 0.
 
         return arr
 
@@ -92,7 +94,7 @@ def png2jpg(path_input0,outputpath=None):
 	return
 
 def dcm2jpg(path_input0,outputpath=None, preproc=False):
-	
+	factor=255
 	if outputpath is None:
 		if path_input0[-1] == "/":
 			outputpath=os.path.dirname(path_input0[:-1])
@@ -115,7 +117,7 @@ def dcm2jpg(path_input0,outputpath=None, preproc=False):
 		jpg_file=outputpath + "/" +  os.path.splitext(os.path.basename(path_input0))[0]+".jpg" 
 		print("Array Shape:"+str(ArrayDicom.shape))
  
-		cv2.imwrite(jpg_file,NormData(ArrayDicom)*255)
+		cv2.imwrite(jpg_file,NormData(ArrayDicom)*factor)
 
 		return
     
@@ -137,7 +139,7 @@ def dcm2jpg(path_input0,outputpath=None, preproc=False):
 		            	jpg_file=outputpath + "/" +  os.path.splitext(os.path.basename(filenameDCM))[0]+".jpg" 
 		            	print("Array Shape:"+str(ArrayDicom.shape))
 
-		            	cv2.imwrite(jpg_file,NormData(ArrayDicom)*255)
+		            	cv2.imwrite(jpg_file,NormData(ArrayDicom)*factor)
                         
 	#except:
 	#	print("Error")
