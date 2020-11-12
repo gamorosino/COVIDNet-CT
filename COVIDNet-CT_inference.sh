@@ -8,7 +8,7 @@
 ###################	description:	Scripts that performs inferce on a series of slice	      ###################
 ###################			using COVIDNet-CT					      ###################
 ###################										      ###################
-###################	version:	0.1.0        				                      ###################
+###################	version:	0.1.1        				                      ###################
 ###################	notes:	        .							      ###################
 ###################	bash version:   tested on GNU bash, version 4.2.53			      ###################
 ###################		           							      ###################
@@ -269,14 +269,16 @@ if [ -d ${input_path} ]; then
 
 					
 	done
+	percentage_Normal="("$( python -c "print(100*float(${count_H}/${#slices[@]}))" )"%)" 
+	percentage_Pneumonia="("$( python -c "print(100*float(${count_P}/${#slices[@]}))" )"%)"
+	percentage_COVID="("$( python -c "print(100*float(${count_C}/${#slices[@]}))" )"%)" 
+	echo "Number of slice Predicted as Normal:    "${count_H} `printf "%.2f" $percentage_Normal`
+	echo "Number of slice Predicted as Pneumonia: "${count_P} `printf "%.2f" $percentage_Pneumonia`
+	echo "Number of slice Predicted as COVID-19:  "${count_C} `printf "%.2f" $percentage_COVID`
 
-	echo "Number of slice Predicted as Normal:    "${count_H} "("$( python -c "print(100*float(${count_H}/${#slices[@]}))" )"%)" 
-	echo "Number of slice Predicted as Pneumonia: "${count_P} "("$( python -c "print(100*float(${count_P}/${#slices[@]}))" )"%)" 
-	echo "Number of slice Predicted as COVID-19:  "${count_C} "("$( python -c "print(100*float(${count_C}/${#slices[@]}))" )"%)" 
-
-	echo "Number of slice Predicted as Normal:    "${count_H} "("$( python -c "print(100*float(${count_H}/${#slices[@]}))" )"%)" >> ${output_short}
-	echo "Number of slice Predicted as Pneumonia: "${count_P} "("$( python -c "print(100*float(${count_P}/${#slices[@]}))" )"%)" >> ${output_short}
-	echo "Number of slice Predicted as COVID-19:  "${count_C} "("$( python -c "print(100*float(${count_C}/${#slices[@]}))" )"%)" >> ${output_short}
+	echo "Number of slice Predicted as Normal:    "${count_H} `printf "%.2f" $percentage_Normal`	>> ${output_short}
+	echo "Number of slice Predicted as Pneumonia: "${count_P} `printf "%.2f" $percentage_Pneumonia`	>> ${output_short}
+	echo "Number of slice Predicted as COVID-19:  "${count_C} `printf "%.2f" $percentage_COVID`	>> ${output_short}
 
 	[ $( exists ${temp_dir} ) -eq 1 ] && { rm -rf ${temp_dir} ; }
 

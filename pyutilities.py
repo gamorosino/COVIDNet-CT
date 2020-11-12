@@ -9,7 +9,7 @@ Created on Mon Jun  1 18:58:24 2020
 ###################		           							      ###################
 ###################	description:	Useful Python functions			     		      ###################
 ###################										      ###################
-###################	version:	0.0       				                      ###################
+###################	version:	0.1       				                      ###################
 ###################	notes:	        .							      ###################
 ###################	bash version:   tested on GNU bash, version 4.2.53			      ###################
 ###################		           							      ###################
@@ -30,7 +30,7 @@ import tensorflow as tf
 import cv2
 import os
 import numpy as np
-import dicom as pydicom
+import pydicom 
 from glob import glob
 
 def NormData(X):

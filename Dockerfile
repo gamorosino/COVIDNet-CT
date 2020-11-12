@@ -102,7 +102,7 @@ RUN cd / \
 	pip install opencv-python ; \
 	pip install tensorflow-io==0.13.0 ; \
 	pip install tensorflow==2.2.0 ; \
-	pip install pydicom==0.9.9 ; \
+	pip install pydicom==2.2.1 ; \
 	deactivate ; '
 
  
