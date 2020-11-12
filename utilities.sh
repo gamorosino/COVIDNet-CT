@@ -8,7 +8,7 @@
 ###################		           							      ###################
 ###################	description:	Useful BASH functions					      ###################
 ###################										      ###################
-###################	version:	0.0     				                      ###################
+###################	version:	0.1     				                      ###################
 ###################	notes:	        needs utilities.py		 			      ###################
 ###################										      ###################
 ###################	bash version:   tested on GNU bash, version 4.2.53			      ###################
@@ -22,6 +22,16 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/"
 pyutilities=${SCRIPT_DIR}"/pyutilities.py"
+
+fbasename () {
+                ############# ############# ############# ############# ############# ############# 
+                #############        remove directory and extension from filename     ############# 
+                ############# ############# ############# ############# ############# #############
+                  
+                echo ` basename $1 | cut -d '.' -f 1 `
+		
+		};
+		
 
 
 gdrive_getID () {
@@ -105,10 +115,10 @@ imm_dcm2jpg () {
 		
 		if [ "${outputdir}" == "None" ]; then
 			python -c "import sys;sys.path.append('$SCRIPT_DIR');\
-			from ${modulepy} import dcm2jpg; dcm2jpg('${dcm_path}');"; 
+			from ${modulepy} import dcm2jpg; dcm2jpg('${dcm_path}',outputpath=None,preproc=True);"; 
 		else
 			python -c "import sys;sys.path.append('$SCRIPT_DIR');	\
-			from ${modulepy} import dcm2jpg; dcm2jpg('$dcm_path','${outputdir}');";
+			from ${modulepy} import dcm2jpg; dcm2jpg('$dcm_path',outputpath='${outputdir}',preproc=True);";
 		fi
 
 

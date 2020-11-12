@@ -30,6 +30,7 @@ import tensorflow as tf
 import cv2
 import os
 import numpy as np
+import pydicom
 
 def NormData(X):
             
@@ -44,11 +45,27 @@ def NormData(X):
                 result=result.astype(X_orig_dtype)
             return result
 	
-def dcm2array(filenameDCM):
+def dcm2array(filenameDCM, preproc=False):
         print("Reading the DICOM image...")
         image_bytes = tf.io.read_file(filenameDCM)
         image = tfio.image.decode_dicom_image(image_bytes, dtype=tf.uint16)
         arr=np.squeeze(image.numpy())	
+	if preproc	
+		DICOM=pydicom.read_file(filenameDCM) 
+		arr[arr == -2000] = 0
+    		# Convert to Hounsfield units (HU)        
+        	intercept = DICOM.RescaleIntercept
+        	slope = DICOM.RescaleSlope
+        	arr = slope * arr.astype(np.float64)
+            	arr = arr.astype(np.uint16)
+        	arr += np.uint16(intercept)
+
+		#MIN_BOUND = -1000.0
+		#MAX_BOUND = 400.0
+    		#arr = (arr - MIN_BOUND) / (MAX_BOUND - MIN_BOUND)
+    		#arr[arr>1] = 1.
+    		#arr[arr<0] = 0.
+
         return arr
 
 def png2jpg(path_input0,outputpath=None):
@@ -74,7 +91,7 @@ def png2jpg(path_input0,outputpath=None):
 	cv2.imwrite(jpg_file, gray)
 	return
 
-def dcm2jpg(path_input0,outputpath=None):
+def dcm2jpg(path_input0,outputpath=None, preproc=False):
 	
 	if outputpath is None:
 		if path_input0[-1] == "/":
@@ -94,7 +111,7 @@ def dcm2jpg(path_input0,outputpath=None):
 			pass
     
 	if not os.path.isdir(path_input0):
-		ArrayDicom=dcm2array(path_input0) 
+		ArrayDicom=dcm2array(path_input0,preproc) 
 		jpg_file=outputpath + "/" +  os.path.splitext(os.path.basename(path_input0))[0]+".jpg" 
 		print("Array Shape:"+str(ArrayDicom.shape))
  
@@ -116,7 +133,7 @@ def dcm2jpg(path_input0,outputpath=None):
 		            lstFilesDCM = src_dcms
 	            
 		            for filenameDCM in lstFilesDCM:		        
-		            	ArrayDicom=dcm2array(filenameDCM)
+		            	ArrayDicom=dcm2array(filenameDCM,preproc)
 		            	jpg_file=outputpath + "/" +  os.path.splitext(os.path.basename(filenameDCM))[0]+".jpg" 
 		            	print("Array Shape:"+str(ArrayDicom.shape))
 
@@ -126,4 +143,7 @@ def dcm2jpg(path_input0,outputpath=None):
 	#	print("Error")
 	
 
+
+	
+	
 
